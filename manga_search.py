@@ -313,19 +313,12 @@ def search_anime_manga_full(query: str) -> List[dict]:
         'query': query
     }
     
-    try:
-        with httpx.Client() as client:
-            response = client.post(url, headers=headers, data=data)
-            response.raise_for_status()
+    with httpx.Client(timeout=10) as client:
+        response = client.post(url, headers=headers, data=data)
+        response.raise_for_status()
+        
+        return extract_full_info(response.text)
             
-            return extract_full_info(response.text)
-            
-    except httpx.RequestError as e:
-        print(f"Request error: {e}")
-        return []
-    except httpx.HTTPStatusError as e:
-        print(f"HTTP error: {e.response.status_code}")
-        return []
 
 
 def interactive_search():
@@ -406,13 +399,5 @@ if __name__ == "__main__":
     retry = 0
     manga_name = interactive_search()
     if manga_name:
-        try:
-            print(f"\nStarting download for '{manga_name}'...")
-            scan_downloader(manga_name)
-        except Exception as e:
-            if retry < max_retry:
-                retry += 1
-                print(f"Retrying... ({retry}/{max_retry})")
-                scan_downloader(manga_name)
-            else:
-                print("Max retries reached. Aborting.")
+        print(f"\nStarting download for '{manga_name}'...")
+        scan_downloader(manga_name)
